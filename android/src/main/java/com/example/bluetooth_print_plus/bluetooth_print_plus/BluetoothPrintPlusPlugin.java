@@ -341,7 +341,9 @@ public class BluetoothPrintPlusPlugin
                     @Override
                     public void onDisconnect() {
                       // LogUtils.d(TAG, "onDisconnect");
-                      sink.success(BPPState.DeviceDisconnected.getValue());
+                      if (sink != null) {
+                        sink.success(BPPState.DeviceDisconnected.getValue());
+                      }
                     }
                   })
                   .build();
