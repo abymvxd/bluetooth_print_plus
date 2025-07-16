@@ -4,6 +4,8 @@ import static android.bluetooth.BluetoothDevice.DEVICE_TYPE_LE;
 
 import static androidx.core.app.ActivityCompat.startActivityForResult;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.Application;

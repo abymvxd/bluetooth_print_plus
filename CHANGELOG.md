@@ -1,3 +1,14 @@
+## V2.4.8
+
+##### 修改点
+
+- 修复 AtomicReference 导入问题;
+
+##### Changed
+
+- Fix 5
+- Added missing import for AtomicReference
+
 ## V2.4.7
 
 ##### 修改点
