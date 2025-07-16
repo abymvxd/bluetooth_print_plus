@@ -1,3 +1,15 @@
+## V2.4.7
+
+##### 修改点
+
+- 修复 EventSink 空指针异常;
+- 优化线程安全;
+
+##### Changed
+
+- Fix 4
+- Improved thread safety for EventSink
+
 ## V2.4.6
 
 ##### 修改点
