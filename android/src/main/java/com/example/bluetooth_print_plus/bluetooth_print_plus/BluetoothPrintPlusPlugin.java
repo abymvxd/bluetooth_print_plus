@@ -323,7 +323,9 @@ public class BluetoothPrintPlusPlugin
                     @Override
                     public void onSuccess(PrinterDevices printerDevices) {
                       // LogUtils.d(TAG, "onSuccess");
-                      sink.success(BPPState.DeviceConnected.getValue());
+                      if (sink != null) {
+                        sink.success(BPPState.DeviceConnected.getValue());
+                      }
                     }
 
                     @Override
@@ -384,13 +386,15 @@ public class BluetoothPrintPlusPlugin
         // LogUtils.d(TAG, "stateStreamHandler, current action: " + action);
         if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
           int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-          switch (blueState) {
-            case BluetoothAdapter.STATE_ON:
-              sink.success(BPPState.BlueOn.getValue());
-              break;
-            case BluetoothAdapter.STATE_OFF:
-              sink.success(BPPState.BlueOff.getValue());
-              break;
+          if (sink != null) {
+            switch (blueState) {
+              case BluetoothAdapter.STATE_ON:
+                sink.success(BPPState.BlueOn.getValue());
+                break;
+              case BluetoothAdapter.STATE_OFF:
+                sink.success(BPPState.BlueOff.getValue());
+                break;
+            }
           }
         }
       }
