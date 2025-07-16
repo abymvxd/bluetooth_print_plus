@@ -65,7 +65,7 @@ public class BluetoothPrintPlusPlugin
   private FlutterPluginBinding pluginBinding;
   private ActivityPluginBinding activityBinding;
   private MethodChannel channel;
-  private EventSink sink;
+  private final AtomicReference<EventSink> sinkRef = new AtomicReference<>();
   private MethodChannel tscChannel;
   private MethodChannel cpclChannel;
   private MethodChannel escChannel;
@@ -323,8 +323,15 @@ public class BluetoothPrintPlusPlugin
                     @Override
                     public void onSuccess(PrinterDevices printerDevices) {
                       // LogUtils.d(TAG, "onSuccess");
-                      if (sink != null) {
-                        sink.success(BPPState.DeviceConnected.getValue());
+                      EventSink eventSink = sinkRef.get();
+                      if (eventSink != null) {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                          try {
+                            eventSink.success(BPPState.DeviceConnected.getValue());
+                          } catch (Exception e) {
+                            LogUtils.e(TAG, "Error sending success event: " + e.getMessage());
+                          }
+                        });
                       }
                     }
 
@@ -343,8 +350,15 @@ public class BluetoothPrintPlusPlugin
                     @Override
                     public void onDisconnect() {
                       // LogUtils.d(TAG, "onDisconnect");
-                      if (sink != null) {
-                        sink.success(BPPState.DeviceDisconnected.getValue());
+                      EventSink eventSink = sinkRef.get();
+                      if (eventSink != null) {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                          try {
+                            eventSink.success(BPPState.DeviceDisconnected.getValue());
+                          } catch (Exception e) {
+                            LogUtils.e(TAG, "Error sending disconnect event: " + e.getMessage());
+                          }
+                        });
                       }
                     }
                   })
@@ -386,15 +400,22 @@ public class BluetoothPrintPlusPlugin
         // LogUtils.d(TAG, "stateStreamHandler, current action: " + action);
         if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
           int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-          if (sink != null) {
-            switch (blueState) {
-              case BluetoothAdapter.STATE_ON:
-                sink.success(BPPState.BlueOn.getValue());
-                break;
-              case BluetoothAdapter.STATE_OFF:
-                sink.success(BPPState.BlueOff.getValue());
-                break;
-            }
+          EventSink eventSink = sinkRef.get();
+          if (eventSink != null) {
+            new Handler(Looper.getMainLooper()).post(() -> {
+              try {
+                switch (blueState) {
+                  case BluetoothAdapter.STATE_ON:
+                    eventSink.success(BPPState.BlueOn.getValue());
+                    break;
+                  case BluetoothAdapter.STATE_OFF:
+                    eventSink.success(BPPState.BlueOff.getValue());
+                    break;
+                }
+              } catch (Exception e) {
+                LogUtils.e(TAG, "Error sending bluetooth state event: " + e.getMessage());
+              }
+            });
           }
         }
       }
@@ -402,15 +423,20 @@ public class BluetoothPrintPlusPlugin
 
     @Override
     public void onListen(Object o, EventSink eventSink) {
-      sink = eventSink;
+      sinkRef.set(eventSink);
       IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
       context.registerReceiver(mReceiver, filter);
     }
 
     @Override
     public void onCancel(Object o) {
-      sink = null;
-      context.unregisterReceiver(mReceiver);
+      sinkRef.set(null);
+      try {
+        context.unregisterReceiver(mReceiver);
+      } catch (IllegalArgumentException e) {
+        // Receiver not registered, ignore
+        LogUtils.e(TAG, "Receiver not registered: " + e.getMessage());
+      }
     }
   };
 }
